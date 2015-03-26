@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<rules>
+	<rule type="timr" start="1220" length="1">forever mine</rule>
+	<rule type="marquee" start="1027" end="1028">it has been done</rule>
+	<rule type="marquee" start="0941" end="1050">hello world</rule>
+</rules>
