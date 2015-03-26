@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<data>
+<rules>
+	<rule type="timr" start="1220" length="1">forever mine</rule>
+	<rule type="marquee" start="2300" end="2348">it HAS been done</rule>
+</rules>
+</data>
