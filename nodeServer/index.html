@@ -1,0 +1,32 @@
+<html>
+<meta charset='utf-8'/>
+<head>
+  <title>flipdot controll</title>
+
+  <script src="http://localhost:8080/socket.io/socket.io.js" ></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js" ></script>
+
+<script type="text/javascript">
+    var socket; 
+
+
+    socket = io.connect('http://localhost:8080');
+
+    socket.on('connected', function(){
+      console.log("connected");
+    });
+    socket.on('data', function(data){
+   })
+	function setMarquee(){
+	  socket.emit("newMarquee", "init");
+	}
+	function setTimer(){
+	  socket.emit("newTimer", 10);	
+	}
+</script>
+</head>
+<body>
+<a href="#" onclick="javascript:setMarquee();">btn</a>
+<a href="#" onclick="javascript:setTimer();">btn Timer</a>
+</body>
+</html>
