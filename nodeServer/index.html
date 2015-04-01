@@ -18,15 +18,32 @@
     socket.on('data', function(data){
    })
 	function setMarquee(){
-	  socket.emit("newMarquee", "init");
+	  socket.emit("newMarquee", $("#marText").val());
 	}
 	function setTimer(){
-	  socket.emit("newTimer", 10);	
+	  socket.emit("newTimer", $("#timeLength").val());	
 	}
+  function setTimedMarquee(){
+    socket.emit("newTimedMarquee", $("#tMarText").val(), $("#tMarTime").val());
+  }
+  function setTimedTimer(){
+    socket.emit("newTimedTimer", $("#tTimText").val(), $("#tTimTime").val());
+  }
 </script>
 </head>
 <body>
-<a href="#" onclick="javascript:setMarquee();">btn</a>
-<a href="#" onclick="javascript:setTimer();">btn Timer</a>
+<input type="text" name="marqueetext" id="marText" placeholder="marqueetext" /><br />
+<a href="#" onclick="javascript:setMarquee();">instant marquee</a>
+<hr />
+<input type="text" name="marqueetext" id="timeLength" placeholder="timerLength" /><br />
+<a href="#" onclick="javascript:setTimer();">instant timer</a>
+<hr />
+<input type="text" name="tMar" id="tMarTime" placeholder="time to start" /><br />
+<input type="text" name="tMarquee" id="tMarText" placeholder="marquee text" /><br />
+<a href="#" onclick="javascript:setTimedMarquee();">timed marquee</a>
+<hr />
+<input type="text" name="tTim" id="tTimTime" placeholder="time to start" /><br />
+<input type="text" name="tTim" id="tTimText" placeholder="timer text" /><br />
+<a href="#" onclick="javascript:setTimedTimer();">timed Timer</a>
 </body>
 </html>
