@@ -5,15 +5,13 @@ var io = require('socket.io');
 var fs = require('fs');
 var url = require('url');
 
-
 var TogglClientJ = require('toggl-api'), togglJ = new TogglClientJ({apiToken: '3474e45372cd1c78efd44357e9df042b'});
 var TogglClientA = require('toggl-api'), togglA = new TogglClientA({apiToken: '1c75c215753d080a53c71c3d3658eb7c'});
 var TogglClientK = require('toggl-api'), togglK = new TogglClientK({apiToken: '06d85cafaeaa093719ca85b1f478dcba'});
 var TogglClientW = require('toggl-api'), togglW = new TogglClientW({apiToken: '52c926f621a6af63ea0b31b26207168d'});
 
 
-
-var client = new osc.Client('127.0.0.1', 12345); 
+var client = new osc.Client('10.0.0.101', 12345); 
 var oscServer = new osc.Server(3333, '0.0.0.0'); oscServer.on("message", function (msg, rinfo) { console.log("TUIO message:"); console.log(msg); });
 
 var file = __dirname + '/chars.json';
@@ -22,9 +20,11 @@ fs.readFile(file, 'utf8', function (err, data) {chars = JSON.parse(data);});
 
 
 var timed = new Array();
-
-
 totalTrackers = new Array();
+
+
+
+
 
 var server = http.createServer(function(req, res){
 	var pathname = url.parse(req.url).pathname;
@@ -44,6 +44,8 @@ var tr = new Array("0000000");
 for(var i = 0; i<27; i++){
 	tr.push(parseInt("000000", 2));
 }
+
+var ir = new Array();
 
 io = io(server);
 server.listen(8080);
@@ -68,18 +70,35 @@ io.on('connection', function(srvr) {
 		addTimed("timer", dly, lngth);
 	});
 
+	srvr.on("newImage", function(upStr, downStr){
+		addPicture(upStr+","+downStr);
+	});
+
+	srvr.on("newTimedImage", function(upStr, downStr, dly){
+		addTimed("image", dly, upStr+","+downStr);
+	});
+
 
 });
 
 
-function sendArr(){
-	for(var i  = 0; i<tr.length; i++){
-		tr[i].toString(16);
+function sendArr(t){
+	if(t == "image"){
+		for(var i  = 0; i<ir.length; i++){
+			ir[i].toString(16);
+		}
+		client.send("pc", ir);
+		pictureUp = false;
+	} else {
+
+		for(var i  = 0; i<tr.length; i++){
+			tr[i].toString(16);
+		}
+		client.send("pc", tr);
+		for(var i = 0; i<tr.length; i++){
+			tr[i] = parseInt("0000000", 2);	
+		}		
 	}
-	client.send("pc", tr);
-	for(var i = 0; i<tr.length; i++){
-		tr[i] = parseInt("0000000", 2);	
-	}	
 }
 
 
@@ -117,6 +136,13 @@ function getTimed(){
 				timed.splice(i, 1);
 				return(true);
 			}
+		}else if(timed[i].typ == "image"){
+			if(timed[i].tim == timeStr){
+				addPicture(timed[i].val);
+				console.log("out");
+				timed.splice(i, 1);
+				return(true);
+			}
 		}
 
 	}
@@ -127,9 +153,10 @@ function getTimed(){
 /* ----------- toggl --------------- */
 
 setInterval(function() {
-	getTimed();
-	if(!marqueeRunning && !timerRunning){
-		getTimeTrackers(function(){
+	if(!pictureUp){
+		getTimed();
+		if(!marqueeRunning && !timerRunning){
+			getTimeTrackers(function(){
 				totalTrackers.sort();
 				var onlineStr = totalTrackers.toString();
 				onlineStr.replace(",", " ");
@@ -142,6 +169,7 @@ setInterval(function() {
 			});
 			sendArr();
 		}
+	}
 }, 1000);
 
 function getTimeTrackers(_callback){
@@ -203,6 +231,19 @@ function timer(length){
 	} else {
 		timerRunning = false;
 	}
+}
+
+
+/* ----------- image --------------- */
+var pictureUp = false;
+function addPicture(str){
+	pictureUp = true;
+	ir = str.split(",");
+	for(var i = 0; i<ir.length; i++){
+		ir[i] = parseInt(ir[i], 2);
+	}
+	sendArr("image");
+	
 }
 
 

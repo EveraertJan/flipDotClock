@@ -5,8 +5,9 @@
 
   <script src="http://localhost:8080/socket.io/socket.io.js" ></script>
   <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js" ></script>
+  <script src="//ajax.googleapis.com/ajax/libs/dojo/1.9.1/dojo/dojo.js"></script>
 
-<script type="text/javascript">
+  <script type="text/javascript">
     var socket; 
 
 
@@ -16,34 +17,176 @@
       console.log("connected");
     });
     socket.on('data', function(data){
-   })
-	function setMarquee(){
-	  socket.emit("newMarquee", $("#marText").val());
-	}
-	function setTimer(){
-	  socket.emit("newTimer", $("#timeLength").val());	
-	}
-  function setTimedMarquee(){
+    })
+    function setMarquee(){
+     socket.emit("newMarquee", $("#marText").val());
+   }
+   function setTimer(){
+     socket.emit("newTimer", $("#timeLength").val());	
+   }
+   function setTimedMarquee(){
     socket.emit("newTimedMarquee", $("#tMarText").val(), $("#tMarTime").val());
   }
   function setTimedTimer(){
     socket.emit("newTimedTimer", $("#tTimText").val(), $("#tTimTime").val());
   }
+  function ConvertImage(){
+
+   var c=document.getElementById("canvas");
+   var ctx=c.getContext("2d");
+   var imgData=ctx.getImageData(0,0,c.width,c.height);
+
+   var lines = 15;
+   var cols = 29;
+   var upper = new Array();
+   var lower = new Array();
+   for(var i = 1; i<=cols; i++){
+    var strUp ="";
+    var strLow = "";
+    for(var j = lines; j>=1; j--){
+      var x = Math.floor((c.width/cols)*i);
+      var y = Math.floor((c.height/lines)*j);
+
+      var pos = ((c.width*y)+x)*4;
+      var color= Math.floor((imgData.data[pos]+imgData.data[pos+1]+imgData.data[pos+2])/3);
+      if(color!="undefined"){
+      if(j<=8){
+        if(color>125){
+          strUp+=""+1;
+        } else {
+          strUp+=""+0;
+        }
+      } else {
+        if(color>125){
+          strLow+=""+1;
+        } else {
+          strLow+=""+0;
+        }
+      }
+      }  
+    }
+
+    upper.push(strUp);
+    lower.push(strLow);
+  }
+  var upperStr = upper.join(",");
+  var lowerStr = lower.join(",");
+  console.log($("#tImgTime").val().length);
+  if($("#tImgTime").val().length == 4){
+    socket.emit("newTimedImage", upperStr, lowerStr, $("#tImgTime").val());
+  } else {
+    socket.emit("newImage", upperStr, lowerStr);
+  }
+}
 </script>
+
+
+</style>  <style type="text/css">
+#preview-row {
+  position: relative;
+  width: auto;
+  padding: 12px;
+  border: 1px solid #ccc;
+}
+#drop-target {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  width: 100px;
+  height: 100px;
+  background-color: #eee;
+  border: 1px solid #ccc;
+  text-align: center;
+  padding: 12px;
+}
+#preview {
+  width: auto;
+  margin-left: 148px;
+  height: 100px;
+  background-color: #eee;
+  padding: 12px;
+  border: 1px solid #ccc;
+}
+</style>
 </head>
 <body>
-<input type="text" name="marqueetext" id="marText" placeholder="marqueetext" /><br />
-<a href="#" onclick="javascript:setMarquee();">instant marquee</a>
-<hr />
-<input type="text" name="marqueetext" id="timeLength" placeholder="timerLength" /><br />
-<a href="#" onclick="javascript:setTimer();">instant timer</a>
-<hr />
-<input type="text" name="tMar" id="tMarTime" placeholder="time to start" /><br />
-<input type="text" name="tMarquee" id="tMarText" placeholder="marquee text" /><br />
-<a href="#" onclick="javascript:setTimedMarquee();">timed marquee</a>
-<hr />
-<input type="text" name="tTim" id="tTimTime" placeholder="time to start" /><br />
-<input type="text" name="tTim" id="tTimText" placeholder="timer text" /><br />
-<a href="#" onclick="javascript:setTimedTimer();">timed Timer</a>
+  <input type="text" name="marqueetext" id="marText" placeholder="marqueetext" /><br />
+  <a href="#" onclick="javascript:setMarquee();">instant marquee</a>
+  <hr />
+  <input type="text" name="marqueetext" id="timeLength" placeholder="timerLength" /><br />
+  <a href="#" onclick="javascript:setTimer();">instant timer</a>
+  <hr />
+  <input type="text" name="tMar" id="tMarTime" placeholder="time to start" /><br />
+  <input type="text" name="tMarquee" id="tMarText" placeholder="marquee text" /><br />
+  <a href="#" onclick="javascript:setTimedMarquee();">timed marquee</a>
+  <hr />
+  <input type="text" name="tTim" id="tTimTime" placeholder="time to start" /><br />
+  <input type="text" name="tTim" id="tTimText" placeholder="timer text" /><br />
+  <a href="#" onclick="javascript:setTimedTimer();">timed Timer</a>
+
+  <hr />
+
+  <div id="promoNode"></div>  
+  <p>Drag an image into the box below to see it automagically resized with canvas and JavaScript.</p>
+
+  <div id="preview-row">
+    <div id="drop-target">Drop image file here.</div>
+    <div id="preview">
+      <canvas id="canvas"></canvas>
+    </div>
+  <input type="text" name="tImg" id="tImgTime" placeholder="time to start image" /><br />
+      <a href="#" onclick="javascript:ConvertImage()">send to flipdot</a>
+  </div>
+  
+  
+  
+  <script>
+    require(["dojo/dom", "dojo/domReady!"], function(dom){
+      console.log("loaded");
+      var MAX_HEIGHT = 100;
+      var target = dom.byId("drop-target"),
+      preview = dom.byId("preview"),
+      canvas = dom.byId("canvas");
+
+      var render = function(src){
+        var img = new Image();
+        img.onload = function(){
+          if(img.height > MAX_HEIGHT) {
+            img.width *= MAX_HEIGHT / img.height;
+            img.height = MAX_HEIGHT;
+          }
+          var ctx = canvas.getContext("2d");
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          preview.style.width = img.width + "px";
+          preview.style.height = img.height + "px";
+          canvas.width = img.width;
+          canvas.height = img.height;
+          ctx.drawImage(img, 0, 0, img.width, img.height);
+        };
+        img.src = src;
+      };
+
+      var readImage = function(imgFile){
+        if(!imgFile.type.match(/image.*/)){
+          console.log("The dropped file is not an image: ", imgFile.type);
+          return;
+        }
+
+        var reader = new FileReader();
+        reader.onload = function(e){
+          render(e.target.result);
+        };
+        reader.readAsDataURL(imgFile);
+      };
+
+    //  DOMReady setup
+    target.addEventListener("dragover", function(e) {e.preventDefault();}, true);
+    target.addEventListener("drop", function(e){
+      e.preventDefault(); 
+      readImage(e.dataTransfer.files[0]);
+    }, true);
+  });
+</script>
+</div>
 </body>
 </html>
