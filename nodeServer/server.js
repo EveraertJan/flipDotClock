@@ -11,7 +11,7 @@ var TogglClientK = require('toggl-api'), togglK = new TogglClientK({apiToken: '0
 var TogglClientW = require('toggl-api'), togglW = new TogglClientW({apiToken: '52c926f621a6af63ea0b31b26207168d'});
 
 
-var client = new osc.Client('10.0.0.101', 12345); 
+var client = new osc.Client('192.168.0.192', 12345); 
 var oscServer = new osc.Server(3333, '0.0.0.0'); oscServer.on("message", function (msg, rinfo) { console.log("TUIO message:"); console.log(msg); });
 
 var file = __dirname + '/chars.json';
@@ -38,7 +38,7 @@ var server = http.createServer(function(req, res){
 			res.end(content);
 		});
 	} 
-}).listen(8080, '192.168.0.230');
+}).listen(8080, '127.0.0.1');
 
 var tr = new Array("0000000");
 for(var i = 0; i<27; i++){
@@ -95,6 +95,7 @@ function sendArr(t){
 			tr[i].toString(16);
 		}
 		client.send("pc", tr);
+		//console.log("array send: "+JSON.stringify(tr));
 		for(var i = 0; i<tr.length; i++){
 			tr[i] = parseInt("0000000", 2);	
 		}		
@@ -139,7 +140,7 @@ function getTimed(){
 		}else if(timed[i].typ == "image"){
 			if(timed[i].tim == timeStr){
 				addPicture(timed[i].val);
-				console.log("out");
+				//console.log("out");
 				timed.splice(i, 1);
 				return(true);
 			}
